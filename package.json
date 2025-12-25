@@ -20,7 +20,13 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migration:run": "ts-node -r tsconfig-paths/register src/database/run-migrations.ts",
     "migration:revert": "ts-node -r tsconfig-paths/register src/database/revert-migration.ts",
-    "migration:show": "ts-node -r tsconfig-paths/register src/database/show-migrations.ts"
+    "migration:show": "ts-node -r tsconfig-paths/register src/database/show-migrations.ts",
+    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+    "docker:dev:build": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "docker:prod": "docker-compose up",
+    "docker:prod:build": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:db": "docker-compose up postgres redis pgadmin redis-commander"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

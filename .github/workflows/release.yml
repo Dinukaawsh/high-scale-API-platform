@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get release notes
+        id: release_notes
+        run: |
+          # Get commits since last tag
+          if git describe --tags --abbrev=0 HEAD~1 2>/dev/null; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            NOTES=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            NOTES=$(git log --pretty=format:"- %s (%h)" --no-merges -10)
+          fi
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## 🚀 Release ${{ github.ref_name }}
+
+            ## Changes
+
+            ${{ steps.release_notes.outputs.notes }}
+
+            ## 📦 Docker Image
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ```
+
+            ## 📝 Full Changelog
+
+            See the [full changelog](https://github.com/${{ github.repository }}/compare/${{ github.ref_name }}^..${{ github.ref_name }}) for details.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
