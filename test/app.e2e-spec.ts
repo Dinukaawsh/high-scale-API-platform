@@ -16,7 +16,7 @@ describe('App (e2e)', () => {
     it('should return hello message', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/v1/',
+        url: '/v1',
       });
 
       expect(response.statusCode).toBe(200);

@@ -6,6 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Request,
+  Version,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,7 +19,6 @@ import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { ApiVersion } from '../versioning/decorators/api-version.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
 export class LoginDto {
@@ -47,12 +47,12 @@ export class RefreshTokenDto {
 
 @ApiTags('auth')
 @Controller('auth')
-@ApiVersion('v1')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('register')
+  @Version('1')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({ type: RegisterDto })
@@ -98,6 +98,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @Version('1')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiBody({ type: RefreshTokenDto })
@@ -120,6 +121,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
+  @Version('1')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Logout user' })

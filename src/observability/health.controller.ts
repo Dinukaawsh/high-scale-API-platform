@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Version } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
@@ -8,12 +8,10 @@ import {
 } from '@nestjs/terminus';
 import { RedisService } from '../redis/redis.service';
 import { MetricsService } from './metrics.service';
-import { ApiVersion } from '../versioning/decorators/api-version.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('health')
 @Controller('health')
-@ApiVersion('v1')
 export class HealthController {
   constructor(
     private health: HealthCheckService,
@@ -25,6 +23,7 @@ export class HealthController {
 
   @Public()
   @Get()
+  @Version('1')
   @HealthCheck()
   @ApiOperation({ summary: 'Health check endpoint' })
   @ApiResponse({
@@ -78,6 +77,7 @@ export class HealthController {
 
   @Public()
   @Get('metrics')
+  @Version('1')
   @ApiOperation({ summary: 'Get Prometheus metrics' })
   @ApiResponse({
     status: 200,

@@ -44,8 +44,8 @@ async function bootstrap() {
   // API Versioning
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: configService.get<string>('API_VERSION', 'v1'),
-    prefix: false, // Don't add 'v' prefix automatically
+    defaultVersion: '1', // Use numeric version for @Version() decorator
+    prefix: 'v', // Add 'v' prefix to version numbers (results in /v1/, /v2/, etc.)
   });
 
   // Global validation pipe
@@ -108,8 +108,8 @@ async function bootstrap() {
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document, {
+  const document = SwaggerModule.createDocument(app as any, swaggerConfig);
+  SwaggerModule.setup('api/docs', app as any, document, {
     customSiteTitle: 'API Documentation',
     customfavIcon: 'https://nestjs.com/img/logo-small.svg',
     customCss: '.swagger-ui .topbar { display: none }',

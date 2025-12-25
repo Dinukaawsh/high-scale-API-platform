@@ -37,8 +37,8 @@ export async function createTestApp(): Promise<NestFastifyApplication> {
 
   app.enableVersioning({
     type: VersioningType.URI,
-    defaultVersion: 'v1',
-    prefix: false,
+    defaultVersion: '1', // Use numeric version for @Version() decorator
+    prefix: 'v', // Add 'v' prefix to version numbers (results in /v1/, /v2/, etc.)
   });
 
   app.useGlobalPipes(

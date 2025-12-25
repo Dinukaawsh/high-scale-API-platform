@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Version } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,15 +9,14 @@ import { AppService } from './app.service';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { Public } from './common/decorators/public.decorator';
 import { RateLimit } from './rate-limit/decorators/rate-limit.decorator';
-import { ApiVersion } from './versioning/decorators/api-version.decorator';
 
 @ApiTags('api')
 @Controller()
-@ApiVersion('v1')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
+  @Version('1')
   @Public()
   @ApiOperation({ summary: 'Get hello message' })
   @ApiResponse({
@@ -39,9 +38,9 @@ export class AppController {
   }
 
   @Get('protected')
+  @Version(['1', '2'])
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiVersion('v1', 'v2')
   @ApiOperation({ summary: 'Get protected resource' })
   @ApiResponse({
     status: 200,
