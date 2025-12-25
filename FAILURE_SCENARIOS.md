@@ -92,11 +92,13 @@ limit_req zone=api_limit burst=20 nodelay;
 #### Layer 2: Application Rate Limiting
 
 **Token Bucket Strategy**:
+
 - Allows bursts up to capacity
 - Refills at constant rate
 - Better for handling spikes
 
 **Leaky Bucket Strategy**:
+
 - Smooths out traffic
 - More predictable rate
 - Better for consistent load
@@ -153,6 +155,7 @@ extra: {
 5. **Rollback**: Switch back if issues detected
 
 **Docker Compose Example**:
+
 ```yaml
 services:
   api-blue:
@@ -171,6 +174,7 @@ services:
 4. **Complete**: All instances updated
 
 **Kubernetes Example**:
+
 ```yaml
 strategy:
   type: RollingUpdate
@@ -199,6 +203,7 @@ check() {
 ```
 
 **Docker Health Check**:
+
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
@@ -214,6 +219,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 4. **Exit process**: Clean shutdown
 
 **Fastify Graceful Shutdown**:
+
 ```typescript
 process.on('SIGTERM', async () => {
   await app.close();
@@ -261,6 +267,7 @@ process.on('SIGTERM', async () => {
 ### Database Connection Loss
 
 **Handling**:
+
 - Connection pooling with retries
 - Health checks detect failures
 - Graceful error responses
@@ -269,6 +276,7 @@ process.on('SIGTERM', async () => {
 ### High Memory Usage
 
 **Handling**:
+
 - Memory health checks
 - Request size limits
 - Connection limits
@@ -277,6 +285,7 @@ process.on('SIGTERM', async () => {
 ### Network Partitions
 
 **Handling**:
+
 - Timeout configurations
 - Retry strategies
 - Fallback mechanisms
@@ -285,6 +294,7 @@ process.on('SIGTERM', async () => {
 ### Cache Stampede
 
 **Handling**:
+
 - Cache warming
 - Stale-while-revalidate
 - Probabilistic early expiration
@@ -319,4 +329,3 @@ process.on('SIGTERM', async () => {
 ---
 
 **Remember**: Failure is inevitable. The goal is to fail gracefully and recover quickly.
-
