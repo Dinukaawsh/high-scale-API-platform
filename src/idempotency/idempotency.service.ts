@@ -30,7 +30,9 @@ export class IdempotencyService {
     const idempotencyKey = `idempotency:${key}`;
 
     if (!this.redisService.isHealthy()) {
-      this.logger.warn('Redis down, cannot check idempotency - allowing request');
+      this.logger.warn(
+        'Redis down, cannot check idempotency - allowing request',
+      );
       return { isDuplicate: false, key: idempotencyKey };
     }
 
@@ -57,7 +59,9 @@ export class IdempotencyService {
 
       return { isDuplicate: false, key: idempotencyKey };
     } catch (error) {
-      this.logger.error(`Idempotency check failed for ${key}: ${error.message}`);
+      this.logger.error(
+        `Idempotency check failed for ${key}: ${error.message}`,
+      );
       return { isDuplicate: false, key: idempotencyKey };
     }
   }
@@ -90,7 +94,9 @@ export class IdempotencyService {
         this.ttl,
       );
     } catch (error) {
-      this.logger.error(`Failed to store idempotency for ${key}: ${error.message}`);
+      this.logger.error(
+        `Failed to store idempotency for ${key}: ${error.message}`,
+      );
     }
   }
 
@@ -119,4 +125,3 @@ export class IdempotencyService {
     return crypto.createHash('sha256').update(bodyString).digest('hex');
   }
 }
-

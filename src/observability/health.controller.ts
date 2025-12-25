@@ -1,9 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
   HealthCheckService,
   HealthCheck,
@@ -74,7 +70,8 @@ export class HealthController {
     description: 'Prometheus-compatible metrics',
     schema: {
       type: 'string',
-      example: '# HELP http_requests_total Total number of HTTP requests\n# TYPE http_requests_total counter\n...',
+      example:
+        '# HELP http_requests_total Total number of HTTP requests\n# TYPE http_requests_total counter\n...',
     },
   })
   async getMetrics() {

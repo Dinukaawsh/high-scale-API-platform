@@ -22,7 +22,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: (data) => {
+        next: () => {
           const response = context.switchToHttp().getResponse();
           const statusCode = response.statusCode || 200;
           const duration = (Date.now() - startTime) / 1000;

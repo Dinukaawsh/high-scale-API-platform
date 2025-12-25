@@ -7,6 +7,8 @@ import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from '../../src/app.module';
 import { LoggingInterceptor } from '../../src/common/interceptors/logging.interceptor';
 import { IdempotencyInterceptor } from '../../src/idempotency/interceptors/idempotency.interceptor';
+import { MetricsService } from '../../src/observability/metrics.service';
+import { IdempotencyService } from '../../src/idempotency/idempotency.service';
 
 export async function createTestApp(): Promise<NestFastifyApplication> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -20,11 +22,15 @@ export async function createTestApp(): Promise<NestFastifyApplication> {
   );
 
   // Apply same configuration as main.ts
-  await app.register(require('@fastify/helmet'), {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const helmet = require('@fastify/helmet');
+  await app.register(helmet, {
     contentSecurityPolicy: false,
   });
 
-  await app.register(require('@fastify/cors'), {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const cors = require('@fastify/cors');
+  await app.register(cors, {
     origin: '*',
     credentials: true,
   });
@@ -47,8 +53,8 @@ export async function createTestApp(): Promise<NestFastifyApplication> {
   );
 
   // Global interceptors (same as main.ts)
-  const metricsService = app.get('MetricsService');
-  const idempotencyService = app.get('IdempotencyService');
+  const metricsService = app.get<MetricsService>('MetricsService');
+  const idempotencyService = app.get<IdempotencyService>('IdempotencyService');
 
   app.useGlobalInterceptors(
     new LoggingInterceptor(metricsService),

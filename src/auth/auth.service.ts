@@ -67,7 +67,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password: _, ...result } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -135,7 +136,7 @@ export class AuthService {
   async validateToken(token: string): Promise<JwtPayload> {
     try {
       return this.jwtService.verify<JwtPayload>(token);
-    } catch (error) {
+    } catch {
       throw new UnauthorizedException('Invalid token');
     }
   }

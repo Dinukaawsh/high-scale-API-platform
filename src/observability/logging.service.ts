@@ -24,9 +24,13 @@ export class LoggingService implements LoggerService {
           winston.format.colorize(),
           winston.format.printf(
             ({ timestamp, level, message, context, ...meta }) => {
-              return `${timestamp} [${context || 'Application'}] ${level}: ${message} ${
-                Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
-              }`;
+              const contextStr =
+                typeof context === 'string' ? context : 'Application';
+              const metaStr =
+                Object.keys(meta).length > 0
+                  ? JSON.stringify(meta, null, 2)
+                  : '';
+              return `${timestamp} [${contextStr}] ${level}: ${message} ${metaStr}`;
             },
           ),
         ),

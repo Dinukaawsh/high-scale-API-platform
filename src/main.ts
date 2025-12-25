@@ -11,6 +11,8 @@ import { LoggingService } from './observability/logging.service';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { IdempotencyInterceptor } from './idempotency/interceptors/idempotency.interceptor';
+import { MetricsService } from './observability/metrics.service';
+import { IdempotencyService } from './idempotency/idempotency.service';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -25,12 +27,16 @@ async function bootstrap() {
   const loggingService = app.get(LoggingService);
 
   // Security headers - Fastify helmet plugin
-  await app.register(require('@fastify/helmet'), {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const helmet = require('@fastify/helmet');
+  await app.register(helmet, {
     contentSecurityPolicy: false, // Adjust based on your needs
   });
 
   // Enable CORS
-  await app.register(require('@fastify/cors'), {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const cors = require('@fastify/cors');
+  await app.register(cors, {
     origin: configService.get<string>('CORS_ORIGIN', '*'),
     credentials: true,
   });
@@ -55,8 +61,8 @@ async function bootstrap() {
   );
 
   // Global interceptors
-  const metricsService = app.get('MetricsService');
-  const idempotencyService = app.get('IdempotencyService');
+  const metricsService = app.get<MetricsService>('MetricsService');
+  const idempotencyService = app.get<IdempotencyService>('IdempotencyService');
 
   app.useGlobalInterceptors(
     new LoggingInterceptor(metricsService),
@@ -102,8 +108,8 @@ async function bootstrap() {
     )
     .build();
 
-  const document = SwaggerModule.createDocument(app as any, swaggerConfig);
-  SwaggerModule.setup('api/docs', app as any, document, {
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'API Documentation',
     customfavIcon: 'https://nestjs.com/img/logo-small.svg',
     customCss: '.swagger-ui .topbar { display: none }',
@@ -125,4 +131,4 @@ async function bootstrap() {
     'Bootstrap',
   );
 }
-bootstrap();
+void bootstrap();

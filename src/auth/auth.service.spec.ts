@@ -13,7 +13,6 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersService: jest.Mocked<UsersService>;
   let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
   let redisService: jest.Mocked<RedisService>;
 
   const mockUser = {
@@ -25,6 +24,19 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    // Create mock config service BEFORE creating the module
+    const mockConfigService = {
+      get: jest.fn((key: string, defaultValue?: any) => {
+        const config: Record<string, any> = {
+          JWT_SECRET: 'test-secret',
+          JWT_REFRESH_SECRET: 'test-refresh-secret',
+          JWT_EXPIRES_IN: '15m',
+          JWT_REFRESH_EXPIRES_IN: '7d',
+        };
+        return config[key] ?? defaultValue;
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -45,9 +57,7 @@ describe('AuthService', () => {
         },
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn(),
-          },
+          useValue: mockConfigService,
         },
         {
           provide: RedisService,
@@ -63,19 +73,7 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     usersService = module.get(UsersService);
     jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
     redisService = module.get(RedisService);
-
-    // Default config values
-    configService.get.mockImplementation((key: string, defaultValue?: any) => {
-      const config: Record<string, any> = {
-        JWT_SECRET: 'test-secret',
-        JWT_REFRESH_SECRET: 'test-refresh-secret',
-        JWT_EXPIRES_IN: '15m',
-        JWT_REFRESH_EXPIRES_IN: '7d',
-      };
-      return config[key] || defaultValue;
-    });
   });
 
   afterEach(() => {

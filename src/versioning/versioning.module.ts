@@ -6,4 +6,3 @@ import { VersioningService } from './versioning.service';
   exports: [VersioningService],
 })
 export class VersioningModule {}
-

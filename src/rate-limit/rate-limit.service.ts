@@ -96,7 +96,7 @@ export class RateLimitService {
         end
       `;
 
-      const result = await redis.eval(
+      const result = (await redis.eval(
         luaScript,
         1,
         key,
@@ -104,7 +104,7 @@ export class RateLimitService {
         refillRate.toString(),
         now.toString(),
         windowMs.toString(),
-      ) as [number, number, number, number?];
+      )) as [number, number, number, number?];
 
       const [allowed, remaining, resetTime, retryAfter] = result;
 
@@ -119,7 +119,9 @@ export class RateLimitService {
         retryAfter: retryAfter ? Math.ceil(retryAfter) : undefined,
       };
     } catch (error) {
-      this.logger.error(`Rate limit check failed for ${identifier}: ${error.message}`);
+      this.logger.error(
+        `Rate limit check failed for ${identifier}: ${error.message}`,
+      );
 
       // Fail open if configured
       if (this.skipIfRedisDown) {
@@ -202,7 +204,7 @@ export class RateLimitService {
         end
       `;
 
-      const result = await redis.eval(
+      const result = (await redis.eval(
         luaScript,
         1,
         key,
@@ -210,7 +212,7 @@ export class RateLimitService {
         leakRate.toString(),
         now.toString(),
         windowMs.toString(),
-      ) as [number, number, number, number?];
+      )) as [number, number, number, number?];
 
       const [allowed, remaining, resetTime, retryAfter] = result;
 
@@ -225,7 +227,9 @@ export class RateLimitService {
         retryAfter: retryAfter ? Math.ceil(retryAfter) : undefined,
       };
     } catch (error) {
-      this.logger.error(`Leaky bucket check failed for ${identifier}: ${error.message}`);
+      this.logger.error(
+        `Leaky bucket check failed for ${identifier}: ${error.message}`,
+      );
 
       if (this.skipIfRedisDown) {
         return {
@@ -244,4 +248,3 @@ export class RateLimitService {
     }
   }
 }
-

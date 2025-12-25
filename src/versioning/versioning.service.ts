@@ -29,7 +29,9 @@ export class VersioningService {
     // Check custom header
     const versionHeader = request.headers?.['x-api-version'];
     if (versionHeader) {
-      return versionHeader.startsWith('v') ? versionHeader : `v${versionHeader}`;
+      return versionHeader.startsWith('v')
+        ? versionHeader
+        : `v${versionHeader}`;
     }
 
     return this.defaultVersion;
@@ -49,4 +51,3 @@ export class VersioningService {
     return supportedVersions.sort().reverse()[0] || this.defaultVersion;
   }
 }
-

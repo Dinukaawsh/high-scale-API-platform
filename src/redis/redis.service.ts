@@ -14,7 +14,7 @@ export class RedisService implements OnModuleInit {
       await this.redis.connect();
       this.isConnected = true;
       this.logger.log('Redis service initialized');
-    } catch (error) {
+    } catch {
       this.logger.warn('Redis connection failed, operating in degraded mode');
       this.isConnected = false;
     }
@@ -93,7 +93,7 @@ export class RedisService implements OnModuleInit {
     try {
       const result = await this.redis.ping();
       return result === 'PONG';
-    } catch (error) {
+    } catch {
       return false;
     }
   }

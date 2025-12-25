@@ -16,6 +16,19 @@ describe('RateLimitService', () => {
       eval: jest.fn(),
     };
 
+    // Create mock config service BEFORE creating the module
+    const mockConfigService = {
+      get: jest.fn((key: string, defaultValue?: any) => {
+        const config: Record<string, any> = {
+          RATE_LIMIT_SKIP_IF_REDIS_DOWN: true,
+        };
+        if (key === 'RATE_LIMIT_SKIP_IF_REDIS_DOWN') {
+          return config[key] ?? defaultValue ?? true;
+        }
+        return config[key] ?? defaultValue;
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RateLimitService,
@@ -34,9 +47,7 @@ describe('RateLimitService', () => {
         },
         {
           provide: ConfigService,
-          useValue: {
-            get: jest.fn(),
-          },
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -45,13 +56,6 @@ describe('RateLimitService', () => {
     redisService = module.get(RedisService);
     metricsService = module.get(MetricsService);
     configService = module.get(ConfigService);
-
-    configService.get.mockImplementation((key: string, defaultValue?: any) => {
-      const config: Record<string, any> = {
-        RATE_LIMIT_SKIP_IF_REDIS_DOWN: true,
-      };
-      return config[key] || defaultValue;
-    });
 
     redisService.getClient.mockReturnValue(mockRedisClient);
   });
@@ -94,16 +98,34 @@ describe('RateLimitService', () => {
     });
 
     it('should deny request when Redis is down and skipIfRedisDown is false', async () => {
-      configService.get.mockReturnValue(false);
+      // Create a new service instance with skipIfRedisDown = false
+      configService.get.mockImplementation(
+        (key: string, defaultValue?: any) => {
+          if (key === 'RATE_LIMIT_SKIP_IF_REDIS_DOWN') return false;
+          return defaultValue;
+        },
+      );
+      const newService = new RateLimitService(
+        redisService,
+        metricsService,
+        configService,
+      );
       redisService.isHealthy.mockReturnValue(false);
 
-      const result = await service.checkTokenBucket('user1', 10, 1, 60);
+      const result = await newService.checkTokenBucket('user1', 10, 1, 60);
 
       expect(result.allowed).toBe(false);
       expect(result.retryAfter).toBeDefined();
     });
 
     it('should handle Redis errors gracefully', async () => {
+      // Reset mock to return true for skipIfRedisDown
+      configService.get.mockImplementation(
+        (key: string, defaultValue?: any) => {
+          if (key === 'RATE_LIMIT_SKIP_IF_REDIS_DOWN') return true;
+          return defaultValue;
+        },
+      );
       redisService.isHealthy.mockReturnValue(true);
       mockRedisClient.eval.mockRejectedValue(new Error('Redis error'));
 

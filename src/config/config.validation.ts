@@ -37,4 +37,3 @@ export const configValidationSchema = Joi.object({
     .valid('error', 'warn', 'info', 'debug', 'verbose')
     .default('info'),
 });
-

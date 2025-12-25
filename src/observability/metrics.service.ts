@@ -86,7 +86,11 @@ export class MetricsService {
       { method, route, status_code: statusCode.toString() },
       duration,
     );
-    this.httpRequestTotal.inc({ method, route, status_code: statusCode.toString() });
+    this.httpRequestTotal.inc({
+      method,
+      route,
+      status_code: statusCode.toString(),
+    });
   }
 
   recordHttpError(method: string, route: string, errorType: string) {
@@ -117,4 +121,3 @@ export class MetricsService {
     return this.registry;
   }
 }
-

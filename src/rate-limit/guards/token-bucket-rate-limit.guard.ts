@@ -98,7 +98,7 @@ export class TokenBucketRateLimitGuard implements CanActivate {
     const apiKey = request.headers['x-api-key'] as string;
     if (apiKey) return `api_key:${apiKey}`;
 
-    const userId = (request as any).user?.id;
+    const userId = request.user?.id;
     if (userId) return `user:${userId}`;
 
     const ip = request.ip || request.headers['x-forwarded-for'] || 'unknown';

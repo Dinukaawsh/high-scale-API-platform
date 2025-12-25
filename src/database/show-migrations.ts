@@ -1,4 +1,3 @@
-import { DataSource } from 'typeorm';
 import dataSource from './data-source';
 
 async function showMigrations() {
@@ -58,4 +57,4 @@ async function showMigrations() {
   }
 }
 
-showMigrations();
+void showMigrations();
