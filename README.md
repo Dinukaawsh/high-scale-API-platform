@@ -74,16 +74,44 @@ pnpm install
 cp .env.example .env
 ```
 
-4. Update `.env` with your configuration:
+4. Update `.env` with your configuration (see [Environment Variables](#environment-variables) section for all options):
 
 ```env
+# Application
+NODE_ENV=development
+PORT=3000
+API_VERSION=v1
+CORS_ORIGIN=*
+
+# Database
 DATABASE_HOST=localhost
+DATABASE_PORT=5432
 DATABASE_USER=postgres
 DATABASE_PASSWORD=postgres
 DATABASE_NAME=api_db
+
+# Redis
 REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_TTL=3600
+
+# JWT (generate secure secrets for production!)
 JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=your-refresh-secret
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Rate Limiting
+RATE_LIMIT_TTL=60
+RATE_LIMIT_MAX=100
+RATE_LIMIT_SKIP_IF_REDIS_DOWN=true
+
+# Observability
+LOG_LEVEL=info
+
+# Idempotency
+IDEMPOTENCY_TTL=86400
 ```
 
 5. Start services with Docker Compose:
@@ -244,23 +272,66 @@ Authorization: Bearer <accessToken>
 
 ### Environment Variables
 
-| Variable                        | Description                   | Default       |
-| ------------------------------- | ----------------------------- | ------------- |
-| `NODE_ENV`                      | Environment                   | `development` |
-| `PORT`                          | Server port                   | `3000`        |
-| `DATABASE_HOST`                 | PostgreSQL host               | -             |
-| `REDIS_HOST`                    | Redis host                    | `localhost`   |
-| `JWT_SECRET`                    | JWT signing secret            | -             |
-| `RATE_LIMIT_SKIP_IF_REDIS_DOWN` | Skip rate limit if Redis down | `true`        |
-| `LOG_LEVEL`                     | Logging level                 | `info`        |
+#### Application Configuration
 
-### Rate Limiting Configuration
+| Variable      | Description          | Default       | Required |
+| ------------- | -------------------- | ------------- | -------- |
+| `NODE_ENV`    | Environment          | `development` | No       |
+| `PORT`        | Server port          | `3000`        | No       |
+| `API_VERSION` | Default API version  | `v1`          | No       |
+| `CORS_ORIGIN` | CORS allowed origins | `*`           | No       |
 
-```env
-RATE_LIMIT_TTL=60          # Time window in seconds
-RATE_LIMIT_MAX=100         # Default max requests
-RATE_LIMIT_SKIP_IF_REDIS_DOWN=true  # Fail open/closed
-```
+#### Database Configuration
+
+| Variable            | Description       | Default | Required |
+| ------------------- | ----------------- | ------- | -------- |
+| `DATABASE_HOST`     | PostgreSQL host   | -       | Yes      |
+| `DATABASE_PORT`     | PostgreSQL port   | `5432`  | No       |
+| `DATABASE_USER`     | Database user     | -       | Yes      |
+| `DATABASE_PASSWORD` | Database password | -       | Yes      |
+| `DATABASE_NAME`     | Database name     | -       | Yes      |
+
+#### Redis Configuration
+
+| Variable         | Description                    | Default     | Required |
+| ---------------- | ------------------------------ | ----------- | -------- |
+| `REDIS_HOST`     | Redis host                     | `localhost` | No       |
+| `REDIS_PORT`     | Redis port                     | `6379`      | No       |
+| `REDIS_PASSWORD` | Redis password (empty if none) | -           | No       |
+| `REDIS_TTL`      | Default cache TTL in seconds   | `3600`      | No       |
+
+#### JWT Configuration
+
+| Variable                 | Description              | Default | Required |
+| ------------------------ | ------------------------ | ------- | -------- |
+| `JWT_SECRET`             | JWT access token secret  | -       | Yes      |
+| `JWT_EXPIRES_IN`         | Access token expiry      | `15m`   | No       |
+| `JWT_REFRESH_SECRET`     | JWT refresh token secret | -       | Yes      |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry     | `7d`    | No       |
+
+#### Rate Limiting Configuration
+
+| Variable                        | Description                       | Default | Required |
+| ------------------------------- | --------------------------------- | ------- | -------- |
+| `RATE_LIMIT_TTL`                | Rate limit time window (seconds)  | `60`    | No       |
+| `RATE_LIMIT_MAX`                | Default max requests per window   | `100`   | No       |
+| `RATE_LIMIT_SKIP_IF_REDIS_DOWN` | Allow requests when Redis is down | `true`  | No       |
+
+#### Observability Configuration
+
+| Variable    | Description                                   | Default | Required |
+| ----------- | --------------------------------------------- | ------- | -------- |
+| `LOG_LEVEL` | Logging level (error/warn/info/debug/verbose) | `info`  | No       |
+
+#### Idempotency Configuration
+
+| Variable          | Description                   | Default | Required |
+| ----------------- | ----------------------------- | ------- | -------- |
+| `IDEMPOTENCY_TTL` | Idempotency key TTL (seconds) | `86400` | No       |
+
+### Complete Environment File Example
+
+See `.env.example` for a complete template with all available environment variables and their descriptions.
 
 ## 🛡️ Failure Scenarios & Solutions
 
