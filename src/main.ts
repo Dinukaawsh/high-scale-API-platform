@@ -130,5 +130,36 @@ async function bootstrap() {
     `Environment: ${configService.get<string>('NODE_ENV')}`,
     'Bootstrap',
   );
+
+  // Graceful shutdown handlers
+  const gracefulShutdown = async (signal: string) => {
+    loggingService.log(`Received ${signal}, starting graceful shutdown...`, 'Shutdown');
+
+    try {
+      // Stop accepting new requests
+      await app.close();
+      loggingService.log('Application closed successfully', 'Shutdown');
+      process.exit(0);
+    } catch (error) {
+      loggingService.error(`Error during shutdown: ${error.message}`, 'Shutdown');
+      process.exit(1);
+    }
+  };
+
+  // Handle termination signals
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error) => {
+    loggingService.error(`Uncaught exception: ${error.message}`, 'Error', error.stack);
+    gracefulShutdown('uncaughtException');
+  });
+
+  // Handle unhandled promise rejections
+  process.on('unhandledRejection', (reason: any) => {
+    loggingService.error(`Unhandled rejection: ${reason}`, 'Error');
+    gracefulShutdown('unhandledRejection');
+  });
 }
 void bootstrap();

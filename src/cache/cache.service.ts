@@ -163,23 +163,128 @@ export class CacheService {
   }
 
   /**
-   * Get or set pattern (cache-aside)
+   * Get or set pattern (cache-aside) with stampede protection
+   * Uses distributed locking to prevent multiple concurrent requests
+   * from hitting the database for the same key
    */
   async getOrSet<T>(
     key: string,
     factory: () => Promise<T>,
     options?: CacheOptions,
   ): Promise<T> {
-    const cached = await this.get<T>(key);
+    const cacheKey = this.buildKey(key, options?.namespace);
+    const lockKey = `${cacheKey}:lock`;
+    const lockTtl = 30; // Lock expires after 30 seconds
 
+    // Try to get from cache first
+    const cached = await this.get<T>(key);
     if (cached !== null) {
       return cached;
     }
 
-    const value = await factory();
-    await this.set(key, value, options);
+    // If Redis is down, just call factory (no stampede protection)
+    if (!this.redisService.isHealthy()) {
+      this.logger.warn(
+        `Redis down, calling factory without stampede protection for key: ${cacheKey}`,
+      );
+      const value = await factory();
+      await this.set(key, value, options);
+      return value;
+    }
 
-    return value;
+    // Try to acquire lock
+    const lockAcquired = await this.acquireLock(lockKey, lockTtl);
+
+    if (lockAcquired) {
+      // We got the lock, fetch the data
+      try {
+        // Double-check cache (another process might have set it)
+        const doubleCheck = await this.get<T>(key);
+        if (doubleCheck !== null) {
+          await this.releaseLock(lockKey);
+          return doubleCheck;
+        }
+
+        // Fetch from factory
+        const value = await factory();
+        await this.set(key, value, options);
+        await this.releaseLock(lockKey);
+        return value;
+      } catch (error) {
+        // Release lock on error
+        await this.releaseLock(lockKey);
+        throw error;
+      }
+    } else {
+      // Lock is held by another process, wait and retry
+      const maxWaitTime = 5000; // 5 seconds max wait
+      const checkInterval = 100; // Check every 100ms
+      const maxRetries = maxWaitTime / checkInterval;
+
+      for (let i = 0; i < maxRetries; i++) {
+        await new Promise((resolve) => setTimeout(resolve, checkInterval));
+
+        const cached = await this.get<T>(key);
+        if (cached !== null) {
+          return cached;
+        }
+
+        // Check if lock is still held
+        const lockExists = await this.redisService.exists(lockKey);
+        if (!lockExists) {
+          // Lock expired, try to get value one more time
+          const cached = await this.get<T>(key);
+          if (cached !== null) {
+            return cached;
+          }
+          // If still not cached, fall through to factory call
+          break;
+        }
+      }
+
+      // If we've waited too long, just call factory
+      // This prevents indefinite waiting
+      this.logger.warn(
+        `Lock wait timeout for key ${cacheKey}, calling factory directly`,
+      );
+      const value = await factory();
+      await this.set(key, value, options);
+      return value;
+    }
+  }
+
+  /**
+   * Acquire a distributed lock using Redis SET NX
+   */
+  private async acquireLock(lockKey: string, ttl: number): Promise<boolean> {
+    if (!this.redisService.isHealthy()) {
+      return false;
+    }
+
+    try {
+      const redis = this.redisService.getClient();
+      // SET key value NX EX ttl - atomic operation
+      const result = await redis.set(lockKey, '1', 'EX', ttl, 'NX');
+      return result === 'OK';
+    } catch (error) {
+      this.logger.warn(`Failed to acquire lock ${lockKey}: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Release a distributed lock
+   */
+  private async releaseLock(lockKey: string): Promise<void> {
+    if (!this.redisService.isHealthy()) {
+      return;
+    }
+
+    try {
+      await this.redisService.del(lockKey);
+    } catch (error) {
+      this.logger.warn(`Failed to release lock ${lockKey}: ${error.message}`);
+    }
   }
 
   private buildKey(key: string, namespace?: string): string {

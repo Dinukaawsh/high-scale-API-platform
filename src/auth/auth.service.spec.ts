@@ -86,7 +86,7 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
       usersService.create.mockResolvedValue(mockUser);
       jwtService.sign.mockReturnValue('access-token');
-      redisService.set.mockResolvedValue(undefined);
+      redisService.set.mockResolvedValue(true);
 
       const result = await service.register('test@example.com', 'password123');
 
@@ -144,7 +144,7 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should generate tokens and store refresh token', async () => {
       jwtService.sign.mockReturnValue('access-token');
-      redisService.set.mockResolvedValue(undefined);
+      redisService.set.mockResolvedValue(true);
 
       const result = await service.login({
         id: '1',
@@ -168,7 +168,7 @@ describe('AuthService', () => {
       redisService.get.mockResolvedValue(refreshTokenValue);
       usersService.findById.mockResolvedValue(mockUser);
       jwtService.sign.mockReturnValue('new-access-token');
-      redisService.set.mockResolvedValue(undefined);
+      redisService.set.mockResolvedValue(true);
 
       const result = await service.refreshToken(refreshTokenValue);
 
@@ -200,7 +200,7 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('should remove refresh token from Redis', async () => {
-      redisService.del.mockResolvedValue(1);
+      redisService.del.mockResolvedValue(true);
 
       await service.logout('1');
 

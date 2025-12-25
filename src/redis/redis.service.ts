@@ -7,15 +7,60 @@ export class RedisService implements OnModuleInit {
   private readonly logger = new Logger(RedisService.name);
   private isConnected = false;
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {
+    this.setupEventListeners();
+  }
+
+  private setupEventListeners(): void {
+    // Track connection state changes
+    this.redis.on('connect', () => {
+      this.logger.log('Redis connecting...');
+    });
+
+    this.redis.on('ready', () => {
+      this.isConnected = true;
+      this.logger.log('Redis connected and ready');
+    });
+
+    this.redis.on('error', (error) => {
+      this.logger.error(`Redis connection error: ${error.message}`);
+      // Don't set isConnected to false on error - may be transient
+      // Only set to false on close
+    });
+
+    this.redis.on('close', () => {
+      this.isConnected = false;
+      this.logger.warn('Redis connection closed, operating in degraded mode');
+    });
+
+    this.redis.on('reconnecting', (delay: number) => {
+      this.logger.warn(`Redis reconnecting in ${delay}ms...`);
+    });
+
+    this.redis.on('end', () => {
+      this.isConnected = false;
+      this.logger.warn('Redis connection ended');
+    });
+  }
 
   async onModuleInit() {
     try {
-      await this.redis.connect();
-      this.isConnected = true;
-      this.logger.log('Redis service initialized');
-    } catch {
-      this.logger.warn('Redis connection failed, operating in degraded mode');
+      // If lazyConnect is true, connection happens on first command
+      // Otherwise, explicitly connect
+      if (!this.redis.status || this.redis.status === 'end') {
+        await this.redis.connect();
+      }
+      // Check if already connected
+      if (this.redis.status === 'ready') {
+        this.isConnected = true;
+        this.logger.log('Redis service initialized');
+      } else {
+        this.logger.log('Redis service initialized (lazy connect)');
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Redis connection failed, operating in degraded mode: ${error.message}`,
+      );
       this.isConnected = false;
     }
   }
@@ -89,11 +134,21 @@ export class RedisService implements OnModuleInit {
   }
 
   async ping(): Promise<boolean> {
-    if (!this.isConnected) return false;
+    // Always attempt ping to check actual connection state
+    // This helps detect reconnection
     try {
       const result = await this.redis.ping();
-      return result === 'PONG';
-    } catch {
+      const wasConnected = this.isConnected;
+      this.isConnected = result === 'PONG';
+
+      // Log state change
+      if (!wasConnected && this.isConnected) {
+        this.logger.log('Redis reconnected successfully');
+      }
+
+      return this.isConnected;
+    } catch (error) {
+      this.isConnected = false;
       return false;
     }
   }
