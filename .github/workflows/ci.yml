@@ -122,13 +122,22 @@ jobs:
             echo "Waiting for PostgreSQL..."
             sleep 2
           done
+          echo "PostgreSQL is ready!"
 
       - name: Wait for Redis
         run: |
-          until redis-cli -h localhost -p 6379 ping; do
-            echo "Waiting for Redis..."
+          # Use a simple TCP connection test (redis-cli not available in runner)
+          # Try connecting to Redis port - if connection succeeds, Redis is ready
+          for i in {1..30}; do
+            if timeout 1 bash -c "echo > /dev/tcp/localhost/6379" 2>/dev/null; then
+              echo "Redis is ready!"
+              exit 0
+            fi
+            echo "Waiting for Redis... ($i/30)"
             sleep 2
           done
+          echo "Redis failed to start after 60 seconds"
+          exit 1
 
       - name: Run database migrations
         env:
@@ -192,7 +201,7 @@ jobs:
           echo "Build successful"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
