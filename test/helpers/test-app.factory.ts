@@ -64,5 +64,13 @@ export async function createTestApp(): Promise<NestFastifyApplication> {
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
 
+  // Ensure proper cleanup on process exit
+  process.on('SIGTERM', async () => {
+    await app.close();
+  });
+  process.on('SIGINT', async () => {
+    await app.close();
+  });
+
   return app;
 }

@@ -34,7 +34,7 @@ export class AppController {
     windowSeconds: 60,
     strategy: 'token_bucket',
   })
-  getHello(): string {
+  getHello(): { message: string } {
     return this.appService.getHello();
   }
 

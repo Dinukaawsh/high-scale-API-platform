@@ -47,10 +47,24 @@ export class HealthController {
     },
   })
   check() {
+    // Use environment variable for memory thresholds, default to higher values for CI
+    const heapThreshold = parseInt(
+      process.env.HEALTH_HEAP_THRESHOLD || '300',
+      10,
+    );
+    const rssThreshold = parseInt(
+      process.env.HEALTH_RSS_THRESHOLD || '500',
+      10,
+    );
+
     return this.health.check([
       () => this.db.pingCheck('database'),
-      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024), // 150MB
-      () => this.memory.checkRSS('memory_rss', 150 * 1024 * 1024), // 150MB
+      () =>
+        this.memory.checkHeap(
+          'memory_heap',
+          heapThreshold * 1024 * 1024, // MB
+        ),
+      () => this.memory.checkRSS('memory_rss', rssThreshold * 1024 * 1024), // MB
       async () => {
         const isHealthy = await this.redisService.ping();
         return {

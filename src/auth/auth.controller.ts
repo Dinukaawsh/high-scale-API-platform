@@ -14,7 +14,7 @@ import {
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -41,6 +41,7 @@ export class RegisterDto {
 
 export class RefreshTokenDto {
   @IsString()
+  @IsNotEmpty()
   refreshToken: string;
 }
 
